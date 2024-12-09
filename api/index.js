@@ -31,7 +31,7 @@ app.get('/', (req, res) => {
 });
 
 // Endpoint untuk menerima data sensor MQ135 (POST)
-app.post('/sensor/mq135', async (req, res) => {
+app.post('/api/sensor/mq135', async (req, res) => {
   const { value } = req.body;  // Mengambil value dari request body
 
   if (value === undefined) {
@@ -49,7 +49,7 @@ app.post('/sensor/mq135', async (req, res) => {
 });
 
 // Endpoint untuk menerima data sensor DHT11 (POST)
-app.post('/sensor/dht11', async (req, res) => {
+app.post('/api/sensor/dht11', async (req, res) => {
   const { temperature, humidity } = req.body;  // Mengambil data temperature dan humidity dari request body
 
   if (temperature === undefined || humidity === undefined) {
@@ -68,7 +68,7 @@ app.post('/sensor/dht11', async (req, res) => {
 });
 
 // Endpoint untuk mendapatkan data sensor MQ135 (GET)
-app.get('/sensor/mq135', async (req, res) => {
+app.get('/api/sensor/mq135', async (req, res) => {
   const sensorData = await Sensor.find({ sensor: 'MQ135' }).sort({ timestamp: -1 }).limit(1);  // Ambil data terakhir
   if (sensorData.length === 0) {
     return res.status(404).json({ error: "No MQ135 data found" });
@@ -77,7 +77,7 @@ app.get('/sensor/mq135', async (req, res) => {
 });
 
 // Endpoint untuk mendapatkan data sensor DHT11 (GET)
-app.get('/sensor/dht11', async (req, res) => {
+app.get('/api/sensor/dht11', async (req, res) => {
   const sensorData = await Sensor.find({ sensor: 'DHT11' }).sort({ timestamp: -1 }).limit(1);  // Ambil data terakhir
   if (sensorData.length === 0) {
     return res.status(404).json({ error: "No DHT11 data found" });
