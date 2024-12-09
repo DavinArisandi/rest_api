@@ -24,7 +24,7 @@ const sensorSchema = new Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
-const Sensor = mongoose.model('sensor', sensorSchema);
+const Sensor = mongoose.model('sensors', sensorSchema);
 
 // Route utama
 app.get('/api', (req, res) => {
