@@ -1,79 +1,77 @@
+const express = require('express');
 const mongoose = require('mongoose');
+const random = require('random');
+const { DateTime } = require('luxon');
+
+// Setup MongoDB
 const dbURI = 'mongodb+srv://davinarisandi:itenasjuara1_@davinarisandi.q5pzj.mongodb.net/sensor_data_db?retryWrites=true&w=majority&appName=DavinArisandi';
-let isConnected = false;
+mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log("MongoDB connected successfully"))
+    .catch((err) => console.log("MongoDB connection error:", err));
 
-async function connectToDatabase() {
-    if (isConnected) return;
-    await mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true });
-    isConnected = true;
-    console.log("MongoDB connected successfully");
-}
-
-/**
- * Schema untuk data sensor:
- * - sensor (String): Jenis sensor yang mengirimkan data (MQ135, DHT11, dll)
- * - value (Number): Nilai gas dari sensor MQ135
- * - temperature (Number): Nilai suhu dari sensor DHT11
- * - humidity (Number): Nilai kelembapan dari sensor DHT11
- * - timestamp (Date): Waktu perekaman data
- */
+// Schema dan Model untuk data sensor
 const sensorSchema = new mongoose.Schema({
     sensor: String,
-    value: Number,         // Untuk sensor MQ135
-    temperature: Number,   // Untuk sensor DHT11
-    humidity: Number,      // Untuk sensor DHT11
+    value: Number,
+    temperature: Number,
+    humidity: Number,
     timestamp: { type: Date, default: Date.now }
 });
 
-// Model MongoDB yang menggunakan schema 'sensorSchema'
-const SensorData = mongoose.model('sensors', sensorSchema);
+const SensorData = mongoose.model('SensorData', sensorSchema);
 
-/**
- * Endpoint untuk menangani request HTTP
- * - Method:
- *    - POST: Menyimpan data sensor baru
- *    - GET: Mengambil semua data sensor
- */
-module.exports = async (req, res) => {
-    await connectToDatabase();
+// Inisialisasi Express
+const app = express();
 
-    if (req.method === "POST") {
-        try {
-            const { sensor, value, temperature, humidity } = req.body;
+// Endpoint untuk sensor MQ135 (gas)
+app.get('/sensor/mq135', async (req, res) => {
+    const value = round(random.float(10, 100), 2); // Menghasilkan nilai gas acak antara 10 hingga 100
 
-            // Validasi data dari request
-            if (!sensor || 
-                (sensor === 'MQ135' && value === undefined) || 
-                (sensor === 'DHT11' && (temperature === undefined || humidity === undefined))) {
-                return res.status(400).json({ error: "Data tidak lengkap" });
-            }
+    // Menyimpan data ke MongoDB
+    const newSensorData = new SensorData({
+        sensor: 'MQ135',
+        value,
+        timestamp: DateTime.now().toJSDate()
+    });
 
-            // Membuat data baru di database
-            const newSensorData = new SensorData({ 
-                sensor, 
-                value, 
-                temperature, 
-                humidity 
-            });
-            await newSensorData.save();
-
-            res.status(200).json({ message: "Data berhasil disimpan" });
-        } catch (error) {
-            console.error("Error while saving data:", error);
-            res.status(500).json({ error: "Failed to save data" });
-        }
-    } else if (req.method === "GET") {
-        try {
-            // Mengambil semua data dari koleksi sensor_data
-            const data = await SensorData.find();
-
-            res.status(200).json(data);
-        } catch (error) {
-            console.error("Error while retrieving data:", error);
-            res.status(500).json({ error: "Failed to retrieve data" });
-        }
-    } else {
-        // Method selain POST dan GET tidak diizinkan
-        res.status(405).json({ error: "Method not allowed" });
+    try {
+        await newSensorData.save();
+        res.status(200).json({ value });
+    } catch (error) {
+        console.error("Error while saving MQ135 data:", error);
+        res.status(500).json({ error: "Failed to save MQ135 data" });
     }
-};
+});
+
+// Endpoint untuk sensor DHT11 (suhu dan kelembapan)
+app.get('/sensor/dht11', async (req, res) => {
+    const temperature = round(random.float(20, 35), 2); // Menghasilkan suhu acak antara 20 hingga 35
+    const humidity = round(random.float(40, 80), 2);    // Menghasilkan kelembapan acak antara 40 hingga 80
+
+    // Menyimpan data ke MongoDB
+    const newSensorData = new SensorData({
+        sensor: 'DHT11',
+        temperature,
+        humidity,
+        timestamp: DateTime.now().toJSDate()
+    });
+
+    try {
+        await newSensorData.save();
+        res.status(200).json({ temperature, humidity });
+    } catch (error) {
+        console.error("Error while saving DHT11 data:", error);
+        res.status(500).json({ error: "Failed to save DHT11 data" });
+    }
+});
+
+// Fungsi untuk pembulatan angka
+function round(num, dec) {
+    return Number(num.toFixed(dec));
+}
+
+// Menjalankan server Express (Port ditentukan oleh Vercel)
+const port = process.env.PORT || 5000; // Gunakan port yang diberikan Vercel atau default ke 3000
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
