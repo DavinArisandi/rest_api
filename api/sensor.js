@@ -11,16 +11,12 @@ async function connectToDatabase() {
 
 /**
  * Schema untuk data sensor:
- * - sensor (String): Jenis sensor (MQ135 atau DHT11)
- * - value (Number) atau temperature (Number) atau humidity (Number): Nilai dari sensor
+ * - gasLevel (Number): Nilai tingkat gas dari sensor MQ135
  * - timestamp (Date): Waktu perekaman data, default saat ini
  */
 const sensorSchema = new mongoose.Schema({
-    sensor: String,  // Menyimpan jenis sensor, seperti 'MQ135' atau 'DHT11'
-    value: { type: Number, required: false },  // Nilai dari MQ135
-    temperature: { type: Number, required: false },  // Temperatur dari DHT11
-    humidity: { type: Number, required: false },  // Kelembapan dari DHT11
-    timestamp: { type: Date, default: Date.now }  // Waktu perekaman data
+    gasLevel: Number,
+    timestamp: { type: Date, default: Date.now }
 });
 
 // Model MongoDB yang menggunakan schema 'sensorSchema'
@@ -38,27 +34,16 @@ module.exports = async (req, res) => {
 
     if (req.method === "POST") {
         try {
-            const { sensor, value, temperature, humidity } = req.body;
+            const { gasLevel } = req.body;
 
             // Validasi data dari request
-            if (!sensor || (sensor === 'MQ135' && value === undefined) || (sensor === 'DHT11' && (temperature === undefined || humidity === undefined))) {
+            if (gasLevel === undefined) {
                 return res.status(400).json({ error: "Data tidak lengkap" });
             }
 
-            // Menentukan format data berdasarkan jenis sensor
-            let sensorData;
-            if (sensor === 'MQ135') {
-                // Format untuk sensor MQ135
-                sensorData = new SensorData({ sensor, value });
-            } else if (sensor === 'DHT11') {
-                // Format untuk sensor DHT11
-                sensorData = new SensorData({ sensor, temperature, humidity });
-            } else {
-                return res.status(400).json({ error: "Sensor tidak dikenal" });
-            }
-
             // Membuat data baru di database
-            await sensorData.save();
+            const newSensorData = new SensorData({ gasLevel });
+            await newSensorData.save();
 
             res.status(200).json({ message: "Data berhasil disimpan" });
         } catch (error) {
