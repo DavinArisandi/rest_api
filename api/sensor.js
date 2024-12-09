@@ -4,7 +4,7 @@ const Sensor = require('../models/sensorModel'); // Mengimpor model Sensor
 const router = express.Router();
 
 // POST data untuk sensor MQ135
-router.post('/sensor/mq135', async (req, res) => {
+router.post('/api/sensor/mq135', async (req, res) => {
   const { value } = req.body;
 
   if (value === undefined) {
@@ -22,7 +22,7 @@ router.post('/sensor/mq135', async (req, res) => {
 });
 
 // POST data untuk sensor DHT11
-router.post('/sensor/dht11', async (req, res) => {
+router.post('/api/sensor/dht11', async (req, res) => {
   const { temperature, humidity } = req.body;
 
   if (temperature === undefined || humidity === undefined) {
@@ -41,7 +41,7 @@ router.post('/sensor/dht11', async (req, res) => {
 });
 
 // GET data untuk sensor MQ135
-router.get('/sensor/mq135', async (req, res) => {
+router.get('/api/sensor/mq135', async (req, res) => {
   const sensorData = await Sensor.find({ sensor: 'MQ135' }).sort({ timestamp: -1 }).limit(1);
   if (sensorData.length === 0) {
     return res.status(404).json({ error: "No MQ135 data found" });
@@ -50,7 +50,7 @@ router.get('/sensor/mq135', async (req, res) => {
 });
 
 // GET data untuk sensor DHT11
-router.get('/sensor/dht11', async (req, res) => {
+router.get('/api/sensor/dht11', async (req, res) => {
   const sensorData = await Sensor.find({ sensor: 'DHT11' }).sort({ timestamp: -1 }).limit(1);
   if (sensorData.length === 0) {
     return res.status(404).json({ error: "No DHT11 data found" });
