@@ -10,6 +10,6 @@ const sensorSchema = new Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
-const Sensor = mongoose.model('Sensor', sensorSchema);
+const Sensor = mongoose.model('sensor', sensorSchema);
 
 module.exports = Sensor;
