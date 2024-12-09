@@ -50,24 +50,6 @@ app.post('/api/sensor/mq135', async (req, res) => {
 });
 
 // Endpoint untuk menerima data sensor DHT11 (POST)
-app.post('/api/sensor/dht11', async (req, res) => {
-  const { temperature, humidity } = req.body;
-
-  if (temperature === undefined || humidity === undefined) {
-    return res.status(400).json({ error: "Temperature and humidity are required" });
-  }
-
-  const newSensorData = new Sensor({
-    sensor: 'DHT11',
-    temperature: temperature,
-    humidity: humidity,
-    timestamp: new Date()
-  });
-
-  await newSensorData.save();
-  res.status(201).json({ temperature: temperature, humidity: humidity, message: 'Data saved successfully' });
-});
-
 // Endpoint untuk mendapatkan data sensor MQ135 (GET)
 app.get('/api/sensor/mq135', async (req, res) => {
   const sensorData = await Sensor.find({ sensor: 'MQ135' }).sort({ timestamp: -1 }).limit(1);  // Ambil data terakhir
@@ -77,14 +59,6 @@ app.get('/api/sensor/mq135', async (req, res) => {
   res.json(sensorData[0]);
 });
 
-// Endpoint untuk mendapatkan data sensor DHT11 (GET)
-app.get('/api/sensor/dht11', async (req, res) => {
-  const sensorData = await Sensor.find({ sensor: 'DHT11' }).sort({ timestamp: -1 }).limit(1);  // Ambil data terakhir
-  if (sensorData.length === 0) {
-    return res.status(404).json({ error: "No DHT11 data found" });
-  }
-  res.json(sensorData[0]);
-});
 
 // Menjalankan server
 const port = process.env.PORT || 5000;
