@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-// Define the schema for sensor data
+// Definisikan schema untuk sensor
 const sensorSchema = new Schema({
   sensor: String,
-  value: Number, // For MQ135 sensor
-  temperature: Number, // For DHT11 sensor
-  humidity: Number, // For DHT11 sensor
+  value: Number,  // Untuk sensor MQ135
+  temperature: Number,  // Untuk sensor DHT11
+  humidity: Number,  // Untuk sensor DHT11
   timestamp: { type: Date, default: Date.now }
 });
 
