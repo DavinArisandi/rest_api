@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 # URL backend Flask
-backend_url = "https://restapi-js.vercel.app/api"
+backend_url = "https://rest-api-five-beta.vercel.app/api"
 
 def data_backend():
     try:

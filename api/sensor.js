@@ -26,7 +26,7 @@ const sensorSchema = new mongoose.Schema({
 });
 
 // Model MongoDB yang menggunakan schema 'sensorSchema'
-const SensorData = mongoose.model('sensor_data', sensorSchema);
+const SensorData = mongoose.model('sensors', sensorSchema);
 
 /**
  * Endpoint untuk menangani request HTTP
