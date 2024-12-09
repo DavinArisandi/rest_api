@@ -20,7 +20,7 @@ mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
 app.use(sensorRoutes);
 
 // Route utama
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.send('<h1>Welcome to the Sensor API</h1>');
 });
 
