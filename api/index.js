@@ -1,69 +1,67 @@
-const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
-const { Schema } = mongoose;
-
-const app = express();
-
-// Middleware untuk CORS dan dukungan JSON
-app.use(cors());
-app.use(express.json());  // Untuk menerima data JSON di request body
-
-// MongoDB Atlas connection
 const dbURI = 'mongodb+srv://davinarisandi:itenasjuara1_@davinarisandi.q5pzj.mongodb.net/sensor_data_db?retryWrites=true&w=majority&appName=DavinArisandi';
-mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB Atlas'))
-  .catch((err) => console.log(err));
+let isConnected = false;
 
-// Schema MongoDB untuk sensor
-const sensorSchema = new Schema({
-  sensor: String,
-  value: Number,  // Untuk MQ135 sensor
-  temperature: Number,  // Untuk DHT11 sensor
-  humidity: Number,  // Untuk DHT11 sensor
-  timestamp: { type: Date, default: Date.now }
+async function connectToDatabase() {
+    if (isConnected) return;
+    await mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true });
+    isConnected = true;
+    console.log("MongoDB connected successfully");
+}
+
+/**
+ * Schema untuk data sensor:
+ * - gasLevel (Number): Nilai tingkat gas dari sensor MQ135
+ * - timestamp (Date): Waktu perekaman data, default saat ini
+ */
+const sensorSchema = new mongoose.Schema({
+    gasLevel: Number,
+    timestamp: { type: Date, default: Date.now }
 });
 
-const Sensor = mongoose.model('sensors', sensorSchema);
+// Model MongoDB yang menggunakan schema 'sensorSchema'
+// Catatan: Nama koleksi adalah "sensor_data"
+const SensorData = mongoose.model('sensors', sensorSchema);
 
-// Route utama
-app.get('/api', (req, res) => {
-  res.send('<h1>Welcome to the Sensor API</h1>');
-});
+/**
+ * Endpoint untuk menangani request HTTP
+ * - Method:
+ *    - POST: Menyimpan data sensor baru
+ *    - GET: Mengambil semua data sensor
+ */
+module.exports = async (req, res) => {
+    await connectToDatabase();
 
-// Endpoint untuk menerima data sensor MQ135 (POST)
-app.post('/api/sensor/mq135', async (req, res) => {
-  const { value } = req.body;
+    if (req.method === "POST") {
+        try {
+            const { gasLevel } = req.body;
 
-  if (value === undefined) {
-    return res.status(400).json({ error: "Value is required" });
-  }
+            // Validasi data dari request
+            if (gasLevel === undefined) {
+                return res.status(400).json({ error: "Data tidak lengkap" });
+            }
 
-  const newSensorData = new Sensor({
-    sensor: 'MQ135',
-    value: value,
-    timestamp: new Date()
-  });
+            // Membuat data baru di database
+            const newSensorData = new SensorData({ gasLevel });
+            await newSensorData.save();
 
-  await newSensorData.save();
-  res.status(201).json({ value: value, message: 'Data saved successfully' });
-});
+            res.status(200).json({ message: "Data berhasil disimpan" });
+        } catch (error) {
+            console.error("Error while saving data:", error);
+            res.status(500).json({ error: "Failed to save data" });
+        }
+    } else if (req.method === "GET") {
+        try {
+            // Mengambil semua data dari koleksi sensor_data
+            const data = await SensorData.find();
 
-// Endpoint untuk menerima data sensor DHT11 (POST)
-// Endpoint untuk mendapatkan data sensor MQ135 (GET)
-app.get('/api/sensor/mq135', async (req, res) => {
-  const sensorData = await Sensor.find({ sensor: 'MQ135' }).sort({ timestamp: -1 }).limit(1);  // Ambil data terakhir
-  if (sensorData.length === 0) {
-    return res.status(404).json({ error: "No MQ135 data found" });
-  }
-  res.json(sensorData[0]);
-});
-
-
-// Menjalankan server
-const port = process.env.PORT || 5000;
-app.listen(port, () => {
-  console.log(`Server berjalan di port ${port}`);
-});
-
-module.exports = app;
+            res.status(200).json(data);
+        } catch (error) {
+            console.error("Error while retrieving data:", error);
+            res.status(500).json({ error: "Failed to retrieve data" });
+        }
+    } else {
+        // Method selain POST dan GET tidak diizinkan
+        res.status(405).json({ error: "Method not allowed" });
+    }
+};
